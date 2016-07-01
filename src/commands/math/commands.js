@@ -1252,6 +1252,15 @@ Environments.Vmatrix = P(Matrix, function(_, super_) {
   };
 });
 
+
+Environments.cases = P(Matrix, function(_, super_) {
+  _.environment = 'cases';
+  _.parentheses = {
+    left: '{',
+    right: null
+  };
+});
+
 // Replacement for mathblocks inside matrix cells
 // Adds matrix-specific deleteOutOf command
 var MatrixCell = P(MathBlock, function(_, super_) {
