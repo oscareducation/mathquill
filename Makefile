@@ -104,7 +104,7 @@ BUILD_DIR_EXISTS = $(BUILD_DIR)/.exists--used_by_Makefile
 #
 
 .PHONY: all basic dev js uglify css font clean
-all: font css uglify
+all: font css uglify cp
 basic: $(UGLY_BASIC_JS) $(BASIC_CSS)
 # dev is like all, but without minification
 dev: font css js
@@ -151,6 +151,11 @@ $(BUILD_DIR_EXISTS):
 $(FONT_TARGET): $(FONT_SOURCE) $(BUILD_DIR_EXISTS)
 	rm -rf $@
 	cp -r $< $@
+
+# copy files to our repos
+cp:
+	cp -R build/mathquill.css build/fonts build/mathquill.js ../oscar/apps/static/vendor/mathquill
+	cp -R build/mathquill.css build/fonts build/mathquill.js ../java/src/main/resources/static/vendor/mathquill
 
 #
 # -*- Test tasks -*-
