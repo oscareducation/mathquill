@@ -996,7 +996,9 @@ var Matrix =
       });
 
       this.htmlTemplate =
-        '<span class="mq-matrix mq-non-leaf">' +
+        '<span class="mq-matrix mq-' +
+        this.environment +
+        ' mq-non-leaf">' +
         parenHtml(this.parentheses.left) +
         '<table class="mq-non-leaf">' +
         trs.replace(/\$tds/g, function() {
@@ -1288,6 +1290,14 @@ Environments.cases = P(Matrix, function(_, super_) {
   _.environment = 'cases';
   _.parentheses = {
     left: '{',
+    right: null
+  };
+});
+
+Environments.array = P(Matrix, function(_, super_) {
+  _.environment = 'array';
+  _.parentheses = {
+    left: null,
     right: null
   };
 });
