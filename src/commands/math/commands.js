@@ -745,16 +745,17 @@ function bindCharBracketPair(open, ctrlSeq) {
   CharCmds[open] = bind(Bracket, L, open, close, ctrlSeq, end);
   CharCmds[close] = bind(Bracket, R, open, close, ctrlSeq, end);
 }
+
+bindCharBracketPair('(');
 // do not show matching "ghost brackets" for these
 // thus enabling students to write half-open interval for example
-// bindCharBracketPair('(');
 // bindCharBracketPair('[');
-// bindCharBracketPair('{', '\\{');
-// LatexCmds.langle = bind(Bracket, L, '&lang;', '&rang;', '\\langle ', '\\rangle ');
-// LatexCmds.rangle = bind(Bracket, R, '&lang;', '&rang;', '\\langle ', '\\rangle ');
-// CharCmds['|'] = bind(Bracket, L, '|', '|', '|', '|');
-// LatexCmds.lVert = bind(Bracket, L, '&#8741;', '&#8741;', '\\lVert ', '\\rVert ');
-// LatexCmds.rVert = bind(Bracket, R, '&#8741;', '&#8741;', '\\lVert ', '\\rVert ');
+CharCmds['|'] = bind(Bracket, L, '|', '|', '|', '|');
+bindCharBracketPair('{', '\\{');
+LatexCmds.langle = bind(Bracket, L, '&lang;', '&rang;', '\\langle ', '\\rangle ');
+LatexCmds.rangle = bind(Bracket, R, '&lang;', '&rang;', '\\langle ', '\\rangle ');
+LatexCmds.lVert = bind(Bracket, L, '&#8741;', '&#8741;', '\\lVert ', '\\rVert ');
+LatexCmds.rVert = bind(Bracket, R, '&#8741;', '&#8741;', '\\lVert ', '\\rVert ');
 
 LatexCmds.left = P(MathCommand, function(_) {
   _.parser = function() {
