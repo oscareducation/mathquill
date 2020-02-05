@@ -155,7 +155,7 @@ $(FONT_TARGET): $(FONT_SOURCE) $(BUILD_DIR_EXISTS)
 # copy files to our repos
 cp:
 	cp -R build/mathquill.css build/fonts build/mathquill.js ../oscar/apps/static/vendor/mathquill
-	cp -R build/mathquill.css build/fonts build/mathquill.js ../java/src/main/resources/static/vendor/mathquill
+	cp -R build/mathquill.css build/fonts build/mathquill.js ../java/src/main/resources/static/frontend/vendor/mathquill
 
 #
 # -*- Test tasks -*-
