@@ -30,8 +30,11 @@ for (var prop in transformPropNames) {
 }
 
 if (transformPropName) {
-  scale = function(jQ, x, y) {
-    jQ.css(transformPropName, 'scale(' + x + ',' + y + ')');
+  scale = function (jQ, x, y, ty_pct = 0) {
+    if (ty_pct !== 0)
+      jQ.css(transformPropName, 'scale(' + x + ',' + y + ') translateY(' + ty_pct + '%)');//added Y translation because rendering is too low
+    else
+      jQ.css(transformPropName, 'scale(' + x + ',' + y + ')');
   };
 } else if ('filter' in div_style) { //IE 6, 7, & 8 fallback, see https://github.com/laughinghan/mathquill/wiki/Transforms
   forceIERedraw = function(el) {
@@ -507,7 +510,8 @@ var SquareRoot =
     };
     _.reflow = function() {
       var block = this.ends[R].jQ;
-      scale(block.prev(), 1, block.innerHeight() / +block.css('fontSize').slice(0, -2) - .1);
+      //size and position of sqrt better adapted to Verdana font
+      scale(block.prev(), 1, block.innerHeight() *1.2 / +block.css('fontSize').slice(0, -2) - .1, -10);
     };
   });
 
@@ -556,7 +560,7 @@ function DelimsMixin(_, super_) {
   _.reflow = function() {
     var height = this.contentjQ.outerHeight() /
       parseFloat(this.contentjQ.css('fontSize'));
-    scale(this.delimjQs, min(1 + .2 * (height - 1), 1.2), 1.2 * height);
+    scale(this.delimjQs, min(1 + .2 * (height - 1), 1.2), 1.2 * height, -15);
   };
 }
 
