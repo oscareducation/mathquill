@@ -468,7 +468,7 @@ var LiveFraction =
             leftward instanceof(LatexCmds.text || noop) ||
             leftward instanceof SummationNotation ||
             leftward.ctrlSeq === '\\ ' ||
-            /^[,;:]$/.test(leftward.ctrlSeq)
+            /^[;:]$/.test(leftward.ctrlSeq)
           ) //lookbehind for operator
         ) leftward = leftward[L];
 
@@ -957,7 +957,9 @@ var Matrix =
 
       var parens = this.jQ.children('.mq-paren');
       if (parens.length) {
-        scale(parens, min(1 + .2 * (height - 1), 1.2), 1.05 * height);
+        // scale a little bit less because we switched to verdana font
+        // scale(parens, min(1 + .2 * (height - 1), 1.2), 1.05 * height);
+        scale(parens, min(0.5 + .2 * (height - 1), 1.2), 1.05 * height);
       }
     };
     _.latex = function() {
