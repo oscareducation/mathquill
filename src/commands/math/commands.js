@@ -1004,7 +1004,7 @@ var Matrix =
         this.environment +
         ' mq-non-leaf">' +
         parenHtml(this.parentheses.left) +
-        '<table class="mq-non-leaf">' +
+        '<table class="' + (this.centered == true ? 'mq-cell-centered ' : '') + 'mq-non-leaf">' +
         trs.replace(/\$tds/g, function() {
           return cells.shift().join('');
         }) +
@@ -1304,6 +1304,15 @@ Environments.array = P(Matrix, function(_, super_) {
     left: null,
     right: null
   };
+});
+
+Environments.carray = P(Matrix, function(_, super_) {
+  _.environment = 'carray';
+  _.parentheses = {
+    left: null,
+    right: null
+  };
+  _.centered = true;
 });
 
 // Replacement for mathblocks inside matrix cells
