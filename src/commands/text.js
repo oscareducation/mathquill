@@ -8,28 +8,29 @@
  * opposed to hierchical, nested, tree-structured math.
  * Wraps a single HTMLSpanElement.
  */
-var TextBlock = P(Node, function(_, super_) {
-  _.ctrlSeq = '\\text';
+var TextBlock = P(Node, function (_, super_) {
+  _.ctrlSeq = "\\text";
 
-  _.replaces = function(replacedText) {
+  _.replaces = function (replacedText) {
     if (replacedText instanceof Fragment)
       this.replacedText = replacedText.remove().jQ.text();
-    else if (typeof replacedText === 'string')
-      this.replacedText = replacedText;
+    else if (typeof replacedText === "string") this.replacedText = replacedText;
   };
 
-  _.jQadd = function(jQ) {
+  _.jQadd = function (jQ) {
     super_.jQadd.call(this, jQ);
     if (this.ends[L]) this.ends[L].jQadd(this.jQ[0].firstChild);
   };
 
-  _.createLeftOf = function(cursor) {
+  _.createLeftOf = function (cursor) {
     var textBlock = this;
     super_.createLeftOf.call(this, cursor);
 
-    if (textBlock[R].siblingCreated) textBlock[R].siblingCreated(cursor.options, L);
-    if (textBlock[L].siblingCreated) textBlock[L].siblingCreated(cursor.options, R);
-    textBlock.bubble('reflow');
+    if (textBlock[R].siblingCreated)
+      textBlock[R].siblingCreated(cursor.options, L);
+    if (textBlock[L].siblingCreated)
+      textBlock[L].siblingCreated(cursor.options, R);
+    textBlock.bubble("reflow");
 
     cursor.insAtRightEnd(textBlock);
 
@@ -38,7 +39,7 @@ var TextBlock = P(Node, function(_, super_) {
         textBlock.write(cursor, textBlock.replacedText.charAt(i));
   };
 
-  _.parser = function() {
+  _.parser = function () {
     var textBlock = this;
 
     // TODO: correctly parse text mode
@@ -46,67 +47,77 @@ var TextBlock = P(Node, function(_, super_) {
     var regex = Parser.regex;
     var optWhitespace = Parser.optWhitespace;
     return optWhitespace
-      .then(string('{')).then(regex(/^[^}]*/)).skip(string('}'))
-      .map(function(text) {
+      .then(string("{"))
+      .then(regex(/^[^}]*/))
+      .skip(string("}"))
+      .map(function (text) {
         if (text.length === 0) return Fragment();
 
         TextPiece(text).adopt(textBlock, 0, 0);
         return textBlock;
-      })
-    ;
+      });
   };
 
-  _.textContents = function() {
-    return this.foldChildren('', function(text, child) {
+  _.textContents = function () {
+    return this.foldChildren("", function (text, child) {
       return text + child.text;
     });
   };
-  _.text = function() { return '"' + this.textContents() + '"'; };
-  _.latex = function() {
-    var contents = this.textContents();
-    if (contents.length === 0) return '';
-    return '\\text{' + contents.replace(/\\/g, '\\backslash ').replace(/[{}]/g, '\\$&') + '}';
+  _.text = function () {
+    return '"' + this.textContents() + '"';
   };
-  _.html = function() {
+  _.latex = function () {
+    var contents = this.textContents();
+    if (contents.length === 0) return "";
     return (
-        '<span class="mq-text-mode" mathquill-command-id='+this.id+'>'
-      +   this.textContents()
-      + '</span>'
+      this.ctrlSeq +
+      "{" +
+      contents.replace(/\\/g, "\\backslash ").replace(/[{}]/g, "\\$&") +
+      "}"
     );
+  };
+
+  _.htmlTemplate = '<span class="mq-text-mode">&0</span>';
+
+  _.html = function () {
+    return this.htmlTemplate.replace("&0", this.textContents());
   };
 
   // editability methods: called by the cursor for editing, cursor movements,
   // and selection of the MathQuill tree, these all take in a direction and
   // the cursor
-  _.moveTowards = function(dir, cursor) { cursor.insAtDirEnd(-dir, this); };
-  _.moveOutOf = function(dir, cursor) { cursor.insDirOf(dir, this); };
+  _.moveTowards = function (dir, cursor) {
+    cursor.insAtDirEnd(-dir, this);
+  };
+  _.moveOutOf = function (dir, cursor) {
+    cursor.insDirOf(dir, this);
+  };
   _.unselectInto = _.moveTowards;
 
   // TODO: make these methods part of a shared mixin or something.
   _.selectTowards = MathCommand.prototype.selectTowards;
   _.deleteTowards = MathCommand.prototype.deleteTowards;
 
-  _.selectOutOf = function(dir, cursor) {
+  _.selectOutOf = function (dir, cursor) {
     cursor.insDirOf(dir, this);
   };
-  _.deleteOutOf = function(dir, cursor) {
+  _.deleteOutOf = function (dir, cursor) {
     // backspace and delete at ends of block don't unwrap
     if (this.isEmpty()) cursor.insRightOf(this);
   };
-  _.write = function(cursor, ch) {
+  _.write = function (cursor, ch) {
     cursor.show().deleteSelection();
 
-    if (ch !== '$') {
+    if (ch !== "$") {
       if (!cursor[L]) TextPiece(ch).createLeftOf(cursor);
       else cursor[L].appendText(ch);
-    }
-    else if (this.isEmpty()) {
+    } else if (this.isEmpty()) {
       cursor.insRightOf(this);
-      VanillaSymbol('\\$','$').createLeftOf(cursor);
-    }
-    else if (!cursor[R]) cursor.insRightOf(this);
+      VanillaSymbol("\\$", "$").createLeftOf(cursor);
+    } else if (!cursor[R]) cursor.insRightOf(this);
     else if (!cursor[L]) cursor.insLeftOf(this);
-    else { // split apart
+    else {
+      // split apart
       var leftBlock = TextBlock();
       var leftPc = this.ends[L];
       leftPc.disown().jQ.detach();
@@ -117,13 +128,15 @@ var TextBlock = P(Node, function(_, super_) {
     }
   };
 
-  _.seek = function(pageX, cursor) {
+  _.seek = function (pageX, cursor) {
     cursor.hide();
     var textPc = fuseChildren(this);
 
     // insert cursor at approx position in DOMTextNode
-    var avgChWidth = this.jQ.width()/this.text.length;
-    var approxPosition = Math.round((pageX - this.jQ.offset().left)/avgChWidth);
+    var avgChWidth = this.jQ.width() / this.text.length;
+    var approxPosition = Math.round(
+      (pageX - this.jQ.offset().left) / avgChWidth
+    );
     if (approxPosition <= 0) cursor.insAtLeftEnd(this);
     else if (approxPosition >= textPc.text.length) cursor.insAtRightEnd(this);
     else cursor.insLeftOf(textPc.splitRight(approxPosition));
@@ -138,41 +151,39 @@ var TextBlock = P(Node, function(_, super_) {
       prevDispl = displ;
       displ = pageX - cursor.offset().left;
     }
-    if (dir*displ < -dir*prevDispl) cursor[-dir].moveTowards(-dir, cursor);
+    if (dir * displ < -dir * prevDispl) cursor[-dir].moveTowards(-dir, cursor);
 
     if (!cursor.anticursor) {
       // about to start mouse-selecting, the anticursor is gonna get put here
       this.anticursorPosition = cursor[L] && cursor[L].text.length;
       // ^ get it? 'cos if there's no cursor[L], it's 0... I'm a terrible person.
-    }
-    else if (cursor.anticursor.parent === this) {
+    } else if (cursor.anticursor.parent === this) {
       // mouse-selecting within this TextBlock, re-insert the anticursor
-      var cursorPosition = cursor[L] && cursor[L].text.length;;
+      var cursorPosition = cursor[L] && cursor[L].text.length;
       if (this.anticursorPosition === cursorPosition) {
         cursor.anticursor = Point.copy(cursor);
-      }
-      else {
+      } else {
         if (this.anticursorPosition < cursorPosition) {
           var newTextPc = cursor[L].splitRight(this.anticursorPosition);
           cursor[L] = newTextPc;
-        }
-        else {
-          var newTextPc = cursor[R].splitRight(this.anticursorPosition - cursorPosition);
+        } else {
+          var newTextPc = cursor[R].splitRight(
+            this.anticursorPosition - cursorPosition
+          );
         }
         cursor.anticursor = Point(this, newTextPc[L], newTextPc);
       }
     }
   };
 
-  _.blur = function(cursor) {
+  _.blur = function (cursor) {
     MathBlock.prototype.blur.call(this);
     if (!cursor) return;
-    if (this.textContents() === '') {
+    if (this.textContents() === "") {
       this.remove();
       if (cursor[L] === this) cursor[L] = this[L];
       else if (cursor[R] === this) cursor[R] = this[R];
-    }
-    else fuseChildren(this);
+    } else fuseChildren(this);
   };
 
   function fuseChildren(self) {
@@ -180,7 +191,7 @@ var TextBlock = P(Node, function(_, super_) {
 
     var textPcDom = self.jQ[0].firstChild;
     if (!textPcDom) return;
-    pray('only node in TextBlock span is Text node', textPcDom.nodeType === 3);
+    pray("only node in TextBlock span is Text node", textPcDom.nodeType === 3);
     // nodeType === 3 has meant a Text node since ancient times:
     //   http://reference.sitepoint.com/javascript/Node/nodeType
 
@@ -201,29 +212,32 @@ var TextBlock = P(Node, function(_, super_) {
  * mirroring the text contents of the DOMTextNode.
  * Text contents must always be nonempty.
  */
-var TextPiece = P(Node, function(_, super_) {
-  _.init = function(text) {
+var TextPiece = P(Node, function (_, super_) {
+  _.init = function (text) {
     super_.init.call(this);
     this.text = text;
   };
-  _.jQadd = function(dom) { this.dom = dom; this.jQ = $(dom); };
-  _.jQize = function() {
+  _.jQadd = function (dom) {
+    this.dom = dom;
+    this.jQ = $(dom);
+  };
+  _.jQize = function () {
     return this.jQadd(document.createTextNode(this.text));
   };
-  _.appendText = function(text) {
+  _.appendText = function (text) {
     this.text += text;
     this.dom.appendData(text);
   };
-  _.prependText = function(text) {
+  _.prependText = function (text) {
     this.text = text + this.text;
     this.dom.insertData(0, text);
   };
-  _.insTextAtDirEnd = function(text, dir) {
+  _.insTextAtDirEnd = function (text, dir) {
     prayDirection(dir);
     if (dir === R) this.appendText(text);
     else this.prependText(text);
   };
-  _.splitRight = function(i) {
+  _.splitRight = function (i) {
     var newPc = TextPiece(this.text.slice(i)).adopt(this.parent, this, this[R]);
     newPc.jQadd(this.dom.splitText(i));
     this.text = this.text.slice(0, i);
@@ -234,10 +248,10 @@ var TextPiece = P(Node, function(_, super_) {
     return text.charAt(dir === L ? 0 : -1 + text.length);
   }
 
-  _.moveTowards = function(dir, cursor) {
+  _.moveTowards = function (dir, cursor) {
     prayDirection(dir);
 
-    var ch = endChar(-dir, this.text)
+    var ch = endChar(-dir, this.text);
 
     var from = this[-dir];
     if (from) from.insTextAtDirEnd(ch, dir);
@@ -246,40 +260,39 @@ var TextPiece = P(Node, function(_, super_) {
     return this.deleteTowards(dir, cursor);
   };
 
-  _.latex = function() { return this.text; };
+  _.latex = function () {
+    return this.text;
+  };
 
-  _.deleteTowards = function(dir, cursor) {
+  _.deleteTowards = function (dir, cursor) {
     if (this.text.length > 1) {
       if (dir === R) {
         this.dom.deleteData(0, 1);
         this.text = this.text.slice(1);
-      }
-      else {
+      } else {
         // note that the order of these 2 lines is annoyingly important
         // (the second line mutates this.text.length)
         this.dom.deleteData(-1 + this.text.length, 1);
         this.text = this.text.slice(0, -1);
       }
-    }
-    else {
+    } else {
       this.remove();
       this.jQ.remove();
       cursor[dir] = this[dir];
     }
   };
 
-  _.selectTowards = function(dir, cursor) {
+  _.selectTowards = function (dir, cursor) {
     prayDirection(dir);
     var anticursor = cursor.anticursor;
 
-    var ch = endChar(-dir, this.text)
+    var ch = endChar(-dir, this.text);
 
     if (anticursor[dir] === this) {
       var newPc = TextPiece(ch).createDir(dir, cursor);
       anticursor[dir] = newPc;
       cursor.insDirOf(dir, newPc);
-    }
-    else {
+    } else {
       var from = this[-dir];
       if (from) from.insTextAtDirEnd(ch, dir);
       else {
@@ -296,94 +309,104 @@ var TextPiece = P(Node, function(_, super_) {
   };
 });
 
-LatexCmds.text =
-LatexCmds.textnormal =
-LatexCmds.textrm =
-LatexCmds.textup =
-LatexCmds.textmd = TextBlock;
+LatexCmds.text = LatexCmds.textnormal = LatexCmds.textrm = LatexCmds.textup = LatexCmds.textmd = TextBlock;
 
 function makeTextBlock(latex, tagName, attrs) {
   return P(TextBlock, {
     ctrlSeq: latex,
-    htmlTemplate: '<'+tagName+' '+attrs+'>&0</'+tagName+'>'
+    htmlTemplate: "<" + tagName + " " + attrs + ">&0</" + tagName + ">",
   });
 }
 
-LatexCmds.em = LatexCmds.italic = LatexCmds.italics =
-LatexCmds.emph = LatexCmds.textit = LatexCmds.textsl =
-  makeTextBlock('\\textit', 'i', 'class="mq-text-mode"');
-LatexCmds.strong = LatexCmds.bold = LatexCmds.textbf =
-  makeTextBlock('\\textbf', 'b', 'class="mq-text-mode"');
-LatexCmds.sf = LatexCmds.textsf =
-  makeTextBlock('\\textsf', 'span', 'class="mq-sans-serif mq-text-mode"');
-LatexCmds.tt = LatexCmds.texttt =
-  makeTextBlock('\\texttt', 'span', 'class="mq-monospace mq-text-mode"');
-LatexCmds.textsc =
-  makeTextBlock('\\textsc', 'span', 'style="font-variant:small-caps" class="mq-text-mode"');
-LatexCmds.uppercase =
-  makeTextBlock('\\uppercase', 'span', 'style="text-transform:uppercase" class="mq-text-mode"');
-LatexCmds.lowercase =
-  makeTextBlock('\\lowercase', 'span', 'style="text-transform:lowercase" class="mq-text-mode"');
+LatexCmds.em = LatexCmds.italic = LatexCmds.italics = LatexCmds.emph = LatexCmds.textit = LatexCmds.textsl = makeTextBlock(
+  "\\textit",
+  "span",
+  'class="mq-text-mode mq-text-italic"'
+);
+LatexCmds.strong = LatexCmds.bold = LatexCmds.textbf = makeTextBlock(
+  "\\textbf",
+  "b",
+  'class="mq-text-mode"'
+);
+LatexCmds.sf = LatexCmds.textsf = makeTextBlock(
+  "\\textsf",
+  "span",
+  'class="mq-sans-serif mq-text-mode"'
+);
+LatexCmds.tt = LatexCmds.texttt = makeTextBlock(
+  "\\texttt",
+  "span",
+  'class="mq-monospace mq-text-mode"'
+);
+LatexCmds.textsc = makeTextBlock(
+  "\\textsc",
+  "span",
+  'style="font-variant:small-caps" class="mq-text-mode"'
+);
+LatexCmds.uppercase = makeTextBlock(
+  "\\uppercase",
+  "span",
+  'style="text-transform:uppercase" class="mq-text-mode"'
+);
+LatexCmds.lowercase = makeTextBlock(
+  "\\lowercase",
+  "span",
+  'style="text-transform:lowercase" class="mq-text-mode"'
+);
 
-
-var RootMathCommand = P(MathCommand, function(_, super_) {
-  _.init = function(cursor) {
-    super_.init.call(this, '$');
+var RootMathCommand = P(MathCommand, function (_, super_) {
+  _.init = function (cursor) {
+    super_.init.call(this, "$");
     this.cursor = cursor;
   };
   _.htmlTemplate = '<span class="mq-math-mode">&0</span>';
-  _.createBlocks = function() {
+  _.createBlocks = function () {
     super_.createBlocks.call(this);
 
     this.ends[L].cursor = this.cursor;
-    this.ends[L].write = function(cursor, ch) {
-      if (ch !== '$')
-        MathBlock.prototype.write.call(this, cursor, ch);
+    this.ends[L].write = function (cursor, ch) {
+      if (ch !== "$") MathBlock.prototype.write.call(this, cursor, ch);
       else if (this.isEmpty()) {
         cursor.insRightOf(this.parent);
         this.parent.deleteTowards(dir, cursor);
-        VanillaSymbol('\\$','$').createLeftOf(cursor.show());
-      }
-      else if (!cursor[R])
-        cursor.insRightOf(this.parent);
-      else if (!cursor[L])
-        cursor.insLeftOf(this.parent);
-      else
-        MathBlock.prototype.write.call(this, cursor, ch);
+        VanillaSymbol("\\$", "$").createLeftOf(cursor.show());
+      } else if (!cursor[R]) cursor.insRightOf(this.parent);
+      else if (!cursor[L]) cursor.insLeftOf(this.parent);
+      else MathBlock.prototype.write.call(this, cursor, ch);
     };
   };
-  _.latex = function() {
-    return '$' + this.ends[L].latex() + '$';
+  _.latex = function () {
+    return "$" + this.ends[L].latex() + "$";
   };
 });
 
-var RootTextBlock = P(RootMathBlock, function(_, super_) {
-  _.keystroke = function(key) {
-    if (key === 'Spacebar' || key === 'Shift-Spacebar') return;
+var RootTextBlock = P(RootMathBlock, function (_, super_) {
+  _.keystroke = function (key) {
+    if (key === "Spacebar" || key === "Shift-Spacebar") return;
     return super_.keystroke.apply(this, arguments);
   };
-  _.write = function(cursor, ch) {
+  _.write = function (cursor, ch) {
     cursor.show().deleteSelection();
-    if (ch === '$')
-      RootMathCommand(cursor).createLeftOf(cursor);
+    if (ch === "$") RootMathCommand(cursor).createLeftOf(cursor);
     else {
       var html;
-      if (ch === '<') html = '&lt;';
-      else if (ch === '>') html = '&gt;';
+      if (ch === "<") html = "&lt;";
+      else if (ch === ">") html = "&gt;";
       VanillaSymbol(ch, html).createLeftOf(cursor);
     }
   };
 });
-API.TextField = function(APIClasses) {
-  return P(APIClasses.EditableField, function(_, super_) {
+API.TextField = function (APIClasses) {
+  return P(APIClasses.EditableField, function (_, super_) {
     this.RootBlock = RootTextBlock;
-    _.__mathquillify = function() {
-      return super_.__mathquillify.call(this, 'mq-editable-field mq-text-mode');
+    _.__mathquillify = function () {
+      return super_.__mathquillify.call(this, "mq-editable-field mq-text-mode");
     };
-    _.latex = function(latex) {
+    _.latex = function (latex) {
       if (arguments.length > 0) {
         this.__controller.renderLatexText(latex);
-        if (this.__controller.blurred) this.__controller.cursor.hide().parent.blur();
+        if (this.__controller.blurred)
+          this.__controller.cursor.hide().parent.blur();
         return this;
       }
       return this.__controller.exportLatex();
